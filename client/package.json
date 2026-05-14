@@ -3,10 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "author": {
-    "name": "Shivam Sharma",
-    "email": "shivamsharma77607@gmail.com",
-    "github": "@Shivam-Sharma-1",
-    "linkedin": "https://www.linkedin.com/in/shivamsharma77607"
+    "name": "Manas Gupta",
+    "github": "@manas08gupta"
   },
   "type": "module",
   "scripts": {

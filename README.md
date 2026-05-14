@@ -1,119 +1,152 @@
-# RiskLens AI — Enterprise Risk Analytics Dashboard
+# RiskLens AI - Enterprise Risk Analytics Dashboard
 
-> A full-stack MERN application featuring a dark-mode analytics dashboard with real-time risk monitoring, Recharts visualisations, geographic exposure maps, client registry, and an editorial landing page.
+Full-stack MERN analytics dashboard with an editorial landing page, risk monitoring views, client analytics, transactions, reports, and settings.
 
----
+![RiskLens dashboard screenshot](client/public/readme_assets/screenshot.png)
 
-## ✨ Features
+## Features
 
-- **Landing Page** — editorial dark-mode hero with scroll animations, stats ticker, and feature grid
-- **Overview** — KPI cards, revenue area chart, product mix pie, live alerts & recent transactions
-- **Risk Map** — client risk score distribution, geographic exposure bar chart, top-risk client list
-- **Clients** — searchable/filterable/sortable table with inline risk score bars
-- **Analytics** — monthly revenue + growth rate dual-axis chart, industry breakdown, product line pie
-- **Reports** — document library with status badges + portfolio summary panel
-- **Settings** — account profile, security, notification preferences, API config
+- Landing page with scroll animations and feature sections
+- Dashboard overview with KPI cards, revenue trend, product mix, alerts, and transactions
+- Risk map with score distribution, geographic exposure, and top-risk clients
+- Clients view with search, filters, sorting, and inline risk indicators
+- Analytics view with revenue, growth, industry, and product charts
+- Reports and settings screens
+- Express API backed by MongoDB and Mongoose
 
----
+## Tech Stack
 
-## 🚀 Quick Start (Local)
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 18, Vite, Recharts, MUI, Nivo |
+| Backend | Node.js, Express |
+| Database | MongoDB, Mongoose |
+| State | Redux Toolkit, RTK Query |
+| Styling | Inline React styles, CSS |
+
+## Local Setup
 
 ### Prerequisites
+
 - Node.js 18+
-- A [MongoDB Atlas](https://cloud.mongodb.com) cluster (free tier works)
+- MongoDB Atlas or local MongoDB connection string
 
-### 1. Clone the repo
+### 1. Clone
+
 ```bash
-git clone https://github.com/<your-username>/risklens-dashboard.git
-cd risklens-dashboard
+git clone https://github.com/manas08gupta/Risklens.git
+cd Risklens
 ```
 
-### 2. Install dependencies
-```bash
-# Install client deps
-cd client && npm install && cd ..
+### 2. Install Dependencies
 
-# Install server deps
-cd server && npm install && cd ..
+```bash
+npm install
 ```
 
-### 3. Configure environment variables
-```bash
-# Server
-cp server/.env.example server/.env
-# Open server/.env and fill in your real MongoDB URI and JWT secret
+The root install also installs dependencies for `client` and `server`.
 
-# Client
-cp client/.env.example client/.env
-# VITE_APP_BASE_URL is already set to http://localhost:5001
+### 3. Configure Environment
+
+Create `server/.env`:
+
+```env
+MONGO_URL=<your-mongodb-connection-string>
+PORT=5001
+JWT_SECRET=<your-jwt-secret>
 ```
 
-### 4. Seed the database (run once)
+Create `client/.env`:
+
+```env
+VITE_APP_BASE_URL=http://localhost:5001
+```
+
+Example files are included at `server/.env.example` and `client/.env.example`.
+
+### 4. Seed Database
+
+Run once after configuring `server/.env`:
+
 ```bash
 node server/seed.js
 ```
 
-### 5. Start the dev stack
+### 5. Run Locally
+
+Run both frontend and backend:
+
 ```bash
-# Terminal 1 — backend
-cd server && npm run dev
-
-# Terminal 2 — frontend
-cd client && npm run dev
+npm run dev
 ```
 
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:5001
+Or run them separately:
 
----
-
-## 🏗️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18, Vite, Recharts, IBM Plex Mono, Syne |
-| Backend | Node.js, Express |
-| Database | MongoDB Atlas, Mongoose |
-| State | Redux Toolkit (RTK Query) |
-| Styling | Vanilla CSS-in-JS (inline styles) |
-
----
-
-## 📁 Project Structure
-
-```
-/client          # React + Vite frontend
-  /src
-    /pages       # LandingPage.jsx, Dashboard.jsx
-    /scenes      # Original MUI scenes (legacy)
-    /state       # Redux store & RTK Query API
-/server          # Express backend
-  /models        # Mongoose schemas
-  /routes        # API route handlers
-  /data          # Static seed data
-  seed.js        # Database seeder
-  index.js       # Server entry point
+```bash
+npm run server
+npm run client
 ```
 
----
+Local URLs:
 
-## 🌐 Deploy
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5001
 
-### Vercel (Frontend) + Render (Backend)
+## Useful Scripts
 
-1. Push this repo to GitHub
-2. **Frontend on Vercel:**
-   - Connect the repo, set Root Directory to `client`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Add env var: `VITE_APP_BASE_URL=<your-render-backend-url>`
-3. **Backend on Render:**
-   - New Web Service → connect repo, Root Directory: `server`
-   - Start Command: `npm start`
-   - Add env vars: `MONGO_URL`, `PORT`, `JWT_SECRET`
+```bash
+npm run dev      # Start backend and frontend together
+npm run server   # Start Express API
+npm run client   # Start Vite frontend
+npm run build    # Build frontend
+npm run lint     # Lint frontend
+npm start        # Start backend entry point
+```
 
----
+## API Routes
 
-## 📄 License
+- `GET /sales/sales`
+- `GET /client/customers`
+- `GET /client/products`
+- `GET /client/transactions`
+- `GET /client/geography`
+- `GET /general/dashboard`
+- `GET /general/user/:id`
+- `GET /management/admins`
+- `GET /management/performance/:id`
 
-MIT © 2026 Manas Gupta
+## Project Structure
+
+```text
+client/
+  src/
+    pages/       # Active landing page and dashboard
+    scenes/      # Legacy routed dashboard screens
+    components/  # Reusable UI components
+    state/       # Redux and RTK Query API setup
+server/
+  controllers/   # Express route handlers
+  routes/        # API routes
+  models/        # Mongoose models
+  data/          # Seed data
+  seed.js        # Database seeding script
+```
+
+## Deployment Notes
+
+Frontend deployment:
+
+- Root directory: `client`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Required env var: `VITE_APP_BASE_URL=<deployed-backend-url>`
+
+Backend deployment:
+
+- Root directory: `server`
+- Start command: `npm start`
+- Required env vars: `MONGO_URL`, `PORT`, `JWT_SECRET`
+
+## License
+
+MIT
