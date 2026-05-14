@@ -96,19 +96,20 @@ function StatCard({ value, label, delay }) {
 
 function FeatureCard({ tag, title, desc, index }) {
   const [ref, inView] = useInView();
+  const [hovered, setHovered] = useState(false);
   const delay = (index % 2) * 0.15;
   return (
     <div ref={ref} style={{
       opacity: inView ? 1 : 0,
       transform: inView ? "translateY(0)" : "translateY(40px)",
-      transition: `opacity 0.8s ease ${delay}s, transform 0.8s ease ${delay}s`,
-      border: "1px solid #1a1a1a", padding: "40px 36px",
+      transition: `opacity 0.8s ease ${delay}s, transform 0.8s ease ${delay}s, border-color 0.2s ease`,
+      border: `1px solid ${hovered ? "#333" : "#1a1a1a"}`, padding: "40px 36px",
       display: "flex", flexDirection: "column", gap: "20px",
       background: "#050505",
       cursor: "default",
     }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = "#333"}
-      onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a1a"}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <span style={{
         fontFamily: "'Syne', sans-serif", fontSize: "11px", letterSpacing: "0.2em",
@@ -142,11 +143,99 @@ function RevealText({ children, delay = 0, size = "clamp(48px, 8vw, 96px)" }) {
   );
 }
 
-export default function LandingPage({ onEnter }) {
-  const [scrollY, setScrollY] = useState(0);
+function NavLink({ children }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <a href="#" style={{ fontSize: "13px", color: hovered ? "#fff" : "#555", letterSpacing: "0.03em", transition: "color 0.2s" }}
+      onClick={e => e.preventDefault()}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}>
+      {children}
+    </a>
+  );
+}
 
+function PrimaryButton({ children, onClick, style = {} }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button onClick={onClick} style={{
+      background: hovered ? "#ddd" : "#fff", color: "#000", border: "none", padding: "10px 20px",
+      fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: "13px",
+      cursor: "pointer", letterSpacing: "0.03em", transition: "background 0.2s",
+      ...style
+    }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}>
+      {children}
+    </button>
+  );
+}
+
+const GlobalStyles = () => (
+  <style>{`
+    @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
+    * { box-sizing: border-box; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+    a { text-decoration: none; color: inherit; }
+  `}</style>
+);
+
+function Nav({ onEnter }) {
+  const [scrollY, setScrollY] = useState(0);
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "24px 48px",
+      borderBottom: scrollY > 60 ? "1px solid #111" : "1px solid transparent",
+      background: scrollY > 60 ? "rgba(0,0,0,0.92)" : "transparent",
+      backdropFilter: scrollY > 60 ? "blur(12px)" : "none",
+      transition: "all 0.4s ease",
+    }}>
+      <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "16px", letterSpacing: "-0.01em" }}>
+        RiskLens <span style={{ color: "#333" }}>AI</span>
+      </div>
+      <div style={{ display: "flex", gap: "40px", alignItems: "center" }}>
+        {["Platform", "Analytics", "Enterprise", "Docs"].map(item => (
+          <NavLink key={item}>{item}</NavLink>
+        ))}
+        <PrimaryButton onClick={onEnter}>Open Dashboard →</PrimaryButton>
+      </div>
+    </nav>
+  );
+}
+
+function Hero({ onEnter }) {
+  const [scrollY, setScrollY] = useState(0);
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -155,112 +244,63 @@ export default function LandingPage({ onEnter }) {
   const heroScale = Math.max(0.92, 1 - scrollY / 4000);
 
   return (
+    <section style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column",
+      justifyContent: "flex-end", padding: "0 48px 80px",
+      position: "relative", overflow: "hidden",
+    }}>
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 0,
+        backgroundImage: "linear-gradient(#111 1px, transparent 1px), linear-gradient(90deg, #111 1px, transparent 1px)",
+        backgroundSize: "80px 80px",
+        opacity: 0.4,
+        maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%)",
+      }} />
+      <div style={{
+        position: "relative", zIndex: 1,
+        opacity: heroOpacity,
+        transform: `scale(${heroScale})`,
+        transformOrigin: "bottom left",
+        transition: "none",
+      }}>
+        <div style={{ animation: "fadeUp 0.8s ease 0.1s both" }}>
+          <span style={{
+            fontFamily: "'Syne', sans-serif", fontSize: "11px", letterSpacing: "0.25em",
+            textTransform: "uppercase", color: "#444", display: "block", marginBottom: "32px",
+          }}>
+            Enterprise Risk Intelligence Platform ✦ Built on MERN
+          </span>
+        </div>
+        <div style={{ marginBottom: "40px" }}>
+          <RevealText delay={0.1}>Risk Analytics,</RevealText>
+          <RevealText delay={0.2}>
+            <span style={{ color: "#333" }}>Redefined</span> for
+          </RevealText>
+          <RevealText delay={0.3}>the Enterprise.</RevealText>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: "32px",
+          animation: "fadeUp 0.8s ease 0.7s both",
+        }}>
+          <PrimaryButton onClick={onEnter} style={{ padding: "16px 32px", fontSize: "14px", letterSpacing: "0.05em" }}>
+            Enter Dashboard →
+          </PrimaryButton>
+          <span style={{ fontSize: "13px", color: "#444" }}>
+            Full-stack · MongoDB · JWT Auth · Nivo Charts
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function LandingPage({ onEnter }) {
+  return (
     <div style={{ background: "#000", color: "#fff", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
-      <style>{`
-        @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
-        a { text-decoration: none; color: inherit; }
-      `}</style>
-
-      {/* NAV */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "24px 48px",
-        borderBottom: scrollY > 60 ? "1px solid #111" : "1px solid transparent",
-        background: scrollY > 60 ? "rgba(0,0,0,0.92)" : "transparent",
-        backdropFilter: scrollY > 60 ? "blur(12px)" : "none",
-        transition: "all 0.4s ease",
-      }}>
-        <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "16px", letterSpacing: "-0.01em" }}>
-          RiskLens <span style={{ color: "#333" }}>AI</span>
-        </div>
-        <div style={{ display: "flex", gap: "40px", alignItems: "center" }}>
-          {["Platform", "Analytics", "Enterprise", "Docs"].map(item => (
-            <a key={item} href="#" style={{ fontSize: "13px", color: "#555", letterSpacing: "0.03em", transition: "color 0.2s" }}
-              onMouseEnter={e => e.target.style.color = "#fff"}
-              onMouseLeave={e => e.target.style.color = "#555"}>
-              {item}
-            </a>
-          ))}
-          <button onClick={onEnter} style={{
-            background: "#fff", color: "#000", border: "none", padding: "10px 20px",
-            fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: "13px",
-            cursor: "pointer", letterSpacing: "0.03em",
-            transition: "background 0.2s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = "#ddd"}
-            onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
-            Open Dashboard →
-          </button>
-        </div>
-      </nav>
-
-      {/* HERO */}
-      <section style={{
-        minHeight: "100vh", display: "flex", flexDirection: "column",
-        justifyContent: "flex-end", padding: "0 48px 80px",
-        position: "relative", overflow: "hidden",
-      }}>
-        {/* Subtle grid */}
-        <div style={{
-          position: "absolute", inset: 0, zIndex: 0,
-          backgroundImage: "linear-gradient(#111 1px, transparent 1px), linear-gradient(90deg, #111 1px, transparent 1px)",
-          backgroundSize: "80px 80px",
-          opacity: 0.4,
-          maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%)",
-        }} />
-
-        {/* Hero content */}
-        <div style={{
-          position: "relative", zIndex: 1,
-          opacity: heroOpacity,
-          transform: `scale(${heroScale})`,
-          transformOrigin: "bottom left",
-          transition: "none",
-        }}>
-          <div style={{ animation: "fadeUp 0.8s ease 0.1s both" }}>
-            <span style={{
-              fontFamily: "'Syne', sans-serif", fontSize: "11px", letterSpacing: "0.25em",
-              textTransform: "uppercase", color: "#444", display: "block", marginBottom: "32px",
-            }}>
-              Enterprise Risk Intelligence Platform ✦ Built on MERN
-            </span>
-          </div>
-
-          <div style={{ marginBottom: "40px" }}>
-            <RevealText delay={0.1}>Risk Analytics,</RevealText>
-            <RevealText delay={0.2}>
-              <span style={{ color: "#333" }}>Redefined</span> for
-            </RevealText>
-            <RevealText delay={0.3}>the Enterprise.</RevealText>
-          </div>
-
-          <div style={{
-            display: "flex", alignItems: "center", gap: "32px",
-            animation: "fadeUp 0.8s ease 0.7s both",
-          }}>
-            <button onClick={onEnter} style={{
-              background: "#fff", color: "#000", border: "none",
-              padding: "16px 32px", fontFamily: "'Syne', sans-serif",
-              fontWeight: 700, fontSize: "14px", cursor: "pointer",
-              letterSpacing: "0.05em", transition: "all 0.2s",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#ddd"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
-              Enter Dashboard →
-            </button>
-            <span style={{ fontSize: "13px", color: "#444" }}>
-              Full-stack · MongoDB · JWT Auth · Nivo Charts
-            </span>
-          </div>
-        </div>
-      </section>
+      <GlobalStyles />
+      <Nav onEnter={onEnter} />
+      <Hero onEnter={onEnter} />
 
       {/* TICKER */}
       <Ticker />
@@ -317,14 +357,9 @@ export default function LandingPage({ onEnter }) {
           marginTop: "60px", animation: "fadeUp 0.8s ease 0.5s both",
           display: "flex", gap: "20px", alignItems: "center", flexWrap: "wrap",
         }}>
-          <button onClick={onEnter} style={{
-            background: "#fff", color: "#000", border: "none",
-            padding: "18px 40px", fontFamily: "'Syne', sans-serif",
-            fontWeight: 700, fontSize: "15px", cursor: "pointer",
-            letterSpacing: "0.05em",
-          }}>
+          <PrimaryButton onClick={onEnter} style={{ padding: "18px 40px", fontSize: "15px", letterSpacing: "0.05em" }}>
             Open Dashboard →
-          </button>
+          </PrimaryButton>
           <span style={{ fontSize: "13px", color: "#333" }}>No setup required. Live data.</span>
         </div>
       </section>

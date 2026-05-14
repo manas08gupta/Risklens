@@ -527,7 +527,7 @@ function PageSettings() {
         <Field label="Full Name"         defaultVal="Manas Gupta" />
         <Field label="Email Address"     defaultVal="manas@risklens.ai" type="email" />
         <Field label="Role"              defaultVal="Risk Analyst" />
-        <Field label="Organisation"      defaultVal="Marsh McLennan" />
+        <Field label="Organisation"      defaultVal="Risklens" />
         <button style={{ background: C.t1, color: "#000", border: "none", padding: "12px 24px", fontFamily: SYNE, fontWeight: 800, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", marginTop: 4 }}>
           Save Changes
         </button>
