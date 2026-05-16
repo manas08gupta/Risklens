@@ -134,7 +134,27 @@ server/
 
 ## Deployment Notes
 
-Frontend deployment:
+### Fast Portfolio Deployment: Vercel Frontend
+
+This repo includes `vercel.json` for a frontend-first deployment from the monorepo root.
+
+- Vercel project root: repository root
+- Install command: `npm install`
+- Build command: `npm run build`
+- Output directory: `client/dist`
+- SPA fallback: handled by `vercel.json`
+
+For a frontend-only demo, `VITE_APP_BASE_URL` can be left unset. The app will use polished demo data so the public site does not depend on a local backend.
+
+When the backend is deployed later, add this Vercel environment variable:
+
+```env
+VITE_APP_BASE_URL=<deployed-backend-url>
+```
+
+### Full Deployment Later
+
+Frontend:
 
 - Root directory: `client`
 - Build command: `npm run build`

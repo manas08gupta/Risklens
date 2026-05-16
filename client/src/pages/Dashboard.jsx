@@ -5,7 +5,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 
-const API = import.meta.env.VITE_APP_BASE_URL || "http://localhost:5001";
+const API = import.meta.env.VITE_APP_BASE_URL || "";
 const SYNE = "'Syne', sans-serif";
 const MONO = "'IBM Plex Mono', monospace";
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap');`;
@@ -29,6 +29,55 @@ const C = {
 };
 
 const PIE_COLORS = ["#fff", "#777", "#aaa", "#444", "#999", "#555"];
+
+const DEMO_DATA = {
+  revenue: [
+    { month: "Jan", totalRevenue: 420000 },
+    { month: "Feb", totalRevenue: 510000 },
+    { month: "Mar", totalRevenue: 640000 },
+    { month: "Apr", totalRevenue: 590000 },
+    { month: "May", totalRevenue: 760000 },
+    { month: "Jun", totalRevenue: 880000 },
+    { month: "Jul", totalRevenue: 930000 },
+    { month: "Aug", totalRevenue: 1040000 },
+    { month: "Sep", totalRevenue: 980000 },
+    { month: "Oct", totalRevenue: 1180000 },
+    { month: "Nov", totalRevenue: 1260000 },
+    { month: "Dec", totalRevenue: 1410000 },
+  ],
+  clients: [
+    { name: "Northstar Capital", country: "USA", industry: "Fintech", revenue: 480000, risk: "Medium", riskScore: 68, riskProfile: "Medium" },
+    { name: "Atlas BioSystems", country: "GBR", industry: "Healthcare AI", revenue: 720000, risk: "High", riskScore: 86, riskProfile: "High" },
+    { name: "HelioGrid", country: "DEU", industry: "Energy", revenue: 390000, risk: "Low", riskScore: 42, riskProfile: "Low" },
+    { name: "CivicStack", country: "CAN", industry: "GovTech", revenue: 610000, risk: "Medium", riskScore: 63, riskProfile: "Medium" },
+    { name: "PromptWorks", country: "IND", industry: "AI Infrastructure", revenue: 820000, risk: "High", riskScore: 91, riskProfile: "High" },
+  ],
+  geo: [
+    { country: "USA", totalExposure: 240000000, clientCount: 18 },
+    { country: "GBR", totalExposure: 140000000, clientCount: 9 },
+    { country: "DEU", totalExposure: 98000000, clientCount: 7 },
+    { country: "IND", totalExposure: 160000000, clientCount: 12 },
+    { country: "CAN", totalExposure: 74000000, clientCount: 6 },
+  ],
+  products: [
+    { name: "AI Risk Audit", revenue: 1140000 },
+    { name: "Compliance Review", revenue: 860000 },
+    { name: "Market Diligence", revenue: 720000 },
+    { name: "Safety Assessment", revenue: 540000 },
+  ],
+  alerts: [
+    { severity: "High", message: "Model governance gap detected", client: "PromptWorks", type: "AI Safety" },
+    { severity: "Medium", message: "Regulatory exposure requires review", client: "Atlas BioSystems", type: "Compliance" },
+    { severity: "Low", message: "Market benchmark updated", client: "HelioGrid", type: "Market" },
+    { severity: "High", message: "Concentration risk crossed threshold", client: "Northstar Capital", type: "Portfolio" },
+  ],
+  transactions: [
+    { _id: "demo-1", client: "Northstar", cost: 125000, createdAt: "2026-05-10" },
+    { _id: "demo-2", client: "AtlasBio", cost: 210000, createdAt: "2026-05-09" },
+    { _id: "demo-3", client: "HelioGrid", cost: 87000, createdAt: "2026-05-07" },
+    { _id: "demo-4", client: "PromptAI", cost: 190000, createdAt: "2026-05-05" },
+  ],
+};
 
 /* ─── helpers ────────────────────────────────────────────────────────────── */
 const fmt = (n) => {
@@ -598,6 +647,12 @@ export default function Dashboard({ onBack }) {
   const [loading, setLoading]     = useState(true);
 
   useEffect(() => {
+    if (!API) {
+      setData(DEMO_DATA);
+      setLoading(false);
+      return;
+    }
+
     // Preserve the mapping logic so the backend data fits perfectly into the components
     const norm = (d) => Array.isArray(d) ? d : (d?.data || []);
     Promise.all([
@@ -647,7 +702,7 @@ export default function Dashboard({ onBack }) {
       // Map Transactions
       const mappedTransactions = (t && t.transactions ? t.transactions : []).map(tx => ({
         _id: tx._id,
-        client: tx.userId.substring(0, 8),
+        client: tx.userId ? tx.userId.substring(0, 8) : "Unknown",
         cost: parseFloat(tx.cost),
         status: "COMPLETED",
         createdAt: tx.createdAt,
@@ -661,14 +716,19 @@ export default function Dashboard({ onBack }) {
         { severity: "High", message: "Failed login attempt", client: "Admin", type: "Auth" },
       ];
 
-      setData({
+      const nextData = {
         revenue: mappedRevenue,
         clients: mappedClients,
         geo: mappedGeo,
         products: mappedProducts,
         alerts: mockAlerts,
         transactions: mappedTransactions
-      });
+      };
+
+      setData(mappedRevenue.length && mappedClients.length ? nextData : DEMO_DATA);
+      setLoading(false);
+    }).catch(() => {
+      setData(DEMO_DATA);
       setLoading(false);
     });
   }, []);
