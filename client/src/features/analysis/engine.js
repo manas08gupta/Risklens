@@ -86,18 +86,6 @@ function levelFromRiskScore(score) {
   return "Low";
 }
 
-function categoryLabel(category) {
-  const labels = {
-    market: "Market Exposure",
-    execution: "Execution Risk",
-    compliance: "Regulatory Surface",
-    ai_safety: "AI Governance",
-    scalability: "Scaling Readiness",
-    monetization: "Monetization Risk",
-  };
-  return labels[category] || sentenceCase(category || "risk");
-}
-
 function toApiPayload(form) {
   return {
     startupName: form.startupName,

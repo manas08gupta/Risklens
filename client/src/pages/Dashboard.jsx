@@ -16,6 +16,8 @@ import {
   YAxis,
 } from "recharts";
 import AnalysisWorkspace from "../features/analysis/AnalysisWorkspace";
+import VisualizationExperience from "../features/visualization/VisualizationExperience";
+import { VISUAL_SECTIONS } from "../features/visualization/data";
 
 const API = import.meta.env.VITE_APP_BASE_URL || "";
 const SYNE = "'Syne', sans-serif";
@@ -255,6 +257,7 @@ function TransactionList({ transactions }) {
   );
 }
 
+/* eslint-disable no-unused-vars -- Retained briefly as the pre-redesign MVP tab references while the unified visualization experience replaces tab routing. */
 function PageOverview({ data, loading, layout }) {
   const { revenue = [], clients = [], products = [], alerts = [], transactions = [] } = data;
   const totalRev = revenue.reduce((s, r) => s + (r.totalRevenue || 0), 0);
@@ -767,10 +770,12 @@ function PageSettings({ layout }) {
     </div>
   );
 }
+/* eslint-enable no-unused-vars */
 
 export default function Dashboard({ onBack }) {
   const layout = useViewport();
-  const [active, setActive] = useState("Analysis Lab");
+  const [active, setActive] = useState("Overview");
+  const [mode, setMode] = useState("visualization");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [data, setData] = useState({ revenue: [], clients: [], geo: [], products: [], alerts: [], transactions: [] });
   const [loading, setLoading] = useState(true);
@@ -856,36 +861,55 @@ export default function Dashboard({ onBack }) {
     });
   }, []);
 
+  useEffect(() => {
+    if (mode !== "visualization") return undefined;
+    const targets = VISUAL_SECTIONS.map((item) => document.getElementById(item.id)).filter(Boolean);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) {
+          const current = VISUAL_SECTIONS.find((item) => item.id === visible.target.id);
+          if (current) setActive(current.label);
+        }
+      },
+      { rootMargin: "-32% 0px -54% 0px", threshold: [0.12, 0.28, 0.5] }
+    );
+
+    targets.forEach((target) => observer.observe(target));
+    return () => observer.disconnect();
+  }, [mode]);
+
   const NAV = [
     { label: "Analysis Lab", icon: "00" },
-    { label: "Overview", icon: "01" },
-    { label: "Risk Map", icon: "02" },
-    { label: "Clients", icon: "03" },
-    { label: "Analytics", icon: "04" },
-    { label: "Reports", icon: "05" },
-    { label: "Settings", icon: "06" },
+    ...VISUAL_SECTIONS.map((item) => ({ label: item.label, icon: item.code, sectionId: item.id })),
   ];
 
   const renderPage = () => {
     const props = { data, loading, layout };
-    switch (active) {
-      case "Analysis Lab":
-        return <AnalysisWorkspace layout={layout} theme={{ C, SYNE, MONO }} />;
-      case "Overview":
-        return <PageOverview {...props} />;
-      case "Risk Map":
-        return <PageRiskMap {...props} />;
-      case "Clients":
-        return <PageClients {...props} />;
-      case "Analytics":
-        return <PageAnalytics {...props} />;
-      case "Reports":
-        return <PageReports {...props} />;
-      case "Settings":
-        return <PageSettings layout={layout} />;
-      default:
-        return <PageOverview {...props} />;
+    if (mode === "Analysis Lab") {
+      return <AnalysisWorkspace layout={layout} theme={{ C, SYNE, MONO }} />;
     }
+    return <VisualizationExperience {...props} theme={{ C, SYNE, MONO }} />;
+  };
+
+  const handleNav = (item) => {
+    if (item.label === "Analysis Lab") {
+      setMode("Analysis Lab");
+      setActive("Analysis Lab");
+      if (layout.isTablet) setSidebarOpen(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    setMode("visualization");
+    setActive(item.label);
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById(item.sectionId);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    if (layout.isTablet) setSidebarOpen(false);
   };
 
   const sidebarWidth = layout.isTablet ? 280 : sidebarOpen ? 220 : 72;
@@ -938,14 +962,11 @@ export default function Dashboard({ onBack }) {
         </div>
 
         <nav style={{ flex: 1, padding: "10px 0", overflowY: "auto" }}>
-          {NAV.map(({ label, icon }) => (
+          {NAV.map((item) => (
             <button
-              key={label}
-              onClick={() => {
-                setActive(label);
-                if (layout.isTablet) setSidebarOpen(false);
-              }}
-              title={label}
+              key={item.label}
+              onClick={() => handleNav(item)}
+              title={item.label}
               style={{
                 width: "100%",
                 display: "flex",
@@ -954,20 +975,25 @@ export default function Dashboard({ onBack }) {
                 cursor: "pointer",
                 padding: !layout.isTablet && !sidebarOpen ? "12px 0" : "12px 18px",
                 justifyContent: !layout.isTablet && !sidebarOpen ? "center" : "flex-start",
-                borderLeft: active === label ? `2px solid ${C.t1}` : "2px solid transparent",
+                borderLeft: active === item.label ? `2px solid ${C.t1}` : "2px solid transparent",
                 borderTop: "none",
                 borderRight: "none",
                 borderBottom: "none",
-                background: active === label ? "#080808" : "transparent",
-                color: active === label ? C.t1 : C.t3,
+                background: active === item.label ? "#080808" : "transparent",
+                color: active === item.label ? C.t1 : C.t3,
                 fontSize: 12,
                 letterSpacing: "0.03em",
                 transition: "all 0.15s",
                 textAlign: "left",
               }}
             >
-              <span style={{ fontSize: 11, minWidth: 24, textAlign: "center", fontFamily: MONO }}>{icon}</span>
-              {(layout.isTablet || sidebarOpen) && <span style={{ fontFamily: SYNE }}>{label}</span>}
+              <span style={{ fontSize: 11, minWidth: 24, textAlign: "center", fontFamily: MONO }}>{item.icon}</span>
+              {(layout.isTablet || sidebarOpen) && (
+                <span style={{ fontFamily: SYNE, display: "grid", gap: 2 }}>
+                  {item.label}
+                  {item.sectionId && <small style={{ fontFamily: MONO, color: active === item.label ? C.t3 : C.t4, fontSize: 9, fontWeight: 400 }}>{VISUAL_SECTIONS.find((section) => section.id === item.sectionId)?.kicker}</small>}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -994,9 +1020,11 @@ export default function Dashboard({ onBack }) {
               </button>
             )}
             <div>
-              <p style={{ fontSize: layout.isMobile ? 16 : 18, fontFamily: SYNE, fontWeight: 800, letterSpacing: "-0.02em", color: C.t1 }}>{active}</p>
+              <p style={{ fontSize: layout.isMobile ? 16 : 18, fontFamily: SYNE, fontWeight: 800, letterSpacing: "-0.02em", color: C.t1 }}>
+                {mode === "visualization" ? "Visualization of Random Data" : active}
+              </p>
               <p style={{ fontSize: 11, color: C.t3, marginTop: 2, fontFamily: MONO, lineHeight: 1.5 }}>
-                {new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                {mode === "visualization" ? `${active} / ${new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}` : new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </p>
             </div>
           </div>
