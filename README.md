@@ -1,6 +1,7 @@
 # RiskLens AI - Enterprise Risk Analytics Dashboard
 
 Full-stack MERN analytics dashboard with an editorial landing page, risk monitoring views, client analytics, transactions, reports, and settings.
+RiskLens now includes a structured AI analysis pipeline that turns startup intake data into investor-style risk intelligence using Gemini, Express, and Zod validation.
 
 ![RiskLens dashboard screenshot](client/public/readme_assets/screenshot.png)
 
@@ -13,6 +14,8 @@ Full-stack MERN analytics dashboard with an editorial landing page, risk monitor
 - Analytics view with revenue, growth, industry, and product charts
 - Reports and settings screens
 - Express API backed by MongoDB and Mongoose
+- AI-powered startup risk analysis via `POST /api/analyze`
+- Gemini structured JSON generation with validation, retries, timeout handling, and safe local fallback
 
 ## Tech Stack
 
@@ -21,6 +24,7 @@ Full-stack MERN analytics dashboard with an editorial landing page, risk monitor
 | Frontend | React 18, Vite, Recharts, MUI, Nivo |
 | Backend | Node.js, Express |
 | Database | MongoDB, Mongoose |
+| AI | Gemini API, Zod |
 | State | Redux Toolkit, RTK Query |
 | Styling | Inline React styles, CSS |
 
@@ -54,6 +58,11 @@ Create `server/.env`:
 MONGO_URL=<your-mongodb-connection-string>
 PORT=5001
 JWT_SECRET=<your-jwt-secret>
+GEMINI_API_KEY=<your-gemini-api-key>
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_TIMEOUT_MS=30000
+GEMINI_MAX_RETRIES=2
+CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173
 ```
 
 Create `client/.env`:
@@ -63,6 +72,8 @@ VITE_APP_BASE_URL=http://localhost:5001
 ```
 
 Example files are included at `server/.env.example` and `client/.env.example`.
+
+`GEMINI_API_KEY` enables real AI analysis. If it is missing, the backend still starts and returns a safe deterministic fallback analysis so the dashboard remains usable during setup.
 
 ### 4. Seed Database
 
@@ -105,6 +116,7 @@ npm start        # Start backend entry point
 
 ## API Routes
 
+- `POST /api/analyze`
 - `GET /sales/sales`
 - `GET /client/customers`
 - `GET /client/products`
@@ -125,8 +137,11 @@ client/
     components/  # Reusable UI components
     state/       # Redux and RTK Query API setup
 server/
+  config/        # Environment configuration
   controllers/   # Express route handlers
+  middleware/    # Request logging and error handling
   routes/        # API routes
+  services/ai/   # Gemini orchestration, prompts, schemas, transforms, retries
   models/        # Mongoose models
   data/          # Seed data
   seed.js        # Database seeding script
