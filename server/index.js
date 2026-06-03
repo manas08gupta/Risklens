@@ -14,17 +14,19 @@ import analysisRoutes from "./routes/analysis.js";
 import { env, getEnvironmentStatus } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { requestLogger } from "./middleware/requestLogger.js";
+import { requestId } from "./middleware/requestId.js";
 
 // CONFIGURATION
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
-app.use(express.json());
+app.use(requestId);
+app.use(express.json({ limit: "64kb" }));
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 app.use(requestLogger);
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "64kb" }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({
   origin(origin, callback) {

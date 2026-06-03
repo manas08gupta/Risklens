@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const TICKER_ITEMS = [
   "Risk Monitoring", "KPI Tracking", "Data Visualization",
@@ -8,32 +9,32 @@ const TICKER_ITEMS = [
 ];
 
 const STATS = [
-  { value: "99.9%", label: "Uptime SLA" },
-  { value: "2.4M+", label: "Data Points Processed" },
-  { value: "340ms", label: "Average Query Time" },
-  { value: "128+", label: "Risk Metrics Tracked" },
+  { value: "6", label: "Risk Pillars" },
+  { value: "3-5 min", label: "Founder Input Time" },
+  { value: "1", label: "Structured Report" },
+  { value: "0", label: "Fake Live Metrics" },
 ];
 
 const FEATURES = [
   {
     tag: "Data Intelligence",
-    title: "Real-Time\nRisk Monitoring",
-    desc: "Live dashboards surface emerging risks across portfolios the moment data changes, with no manual refresh and no lag.",
+    title: "Startup\nRisk Readouts",
+    desc: "Turn founder context into a structured risk report across market, execution, compliance, AI safety, scale, and monetization.",
   },
   {
-    tag: "Spatial Analytics",
-    title: "Geographic\nExposure Maps",
-    desc: "Visualize risk concentration by region, country, and asset class so teams can spot clusters before they become crises.",
+    tag: "Investor Readiness",
+    title: "Evidence\nGap Mapping",
+    desc: "Identify which claims need proof before investor conversations, diligence, pilots, or pricing changes.",
   },
   {
-    tag: "Performance",
-    title: "Client &\nPortfolio Insights",
-    desc: "Unified views across client accounts help teams track revenue, exposure, and performance against benchmarks in one place.",
+    tag: "AI Governance",
+    title: "Model Risk\nEvaluation",
+    desc: "Assess AI reliability, sensitive-data exposure, decision automation, and operating controls without pretending every startup is enterprise-ready.",
   },
   {
-    tag: "Enterprise Auth",
-    title: "Role-Based\nAccess Control",
-    desc: "Granular permissions ensure analysts, managers, and executives see exactly what they need and nothing more.",
+    tag: "Saved Reports",
+    title: "Founder\nWorkspace",
+    desc: "Keep generated reports in a lightweight MVP workspace so teams can compare risk posture across iterations.",
   },
 ];
 
@@ -369,10 +370,10 @@ function Nav({ onEnter, isTablet }) {
           </button>
         ) : (
           <div style={{ display: "flex", gap: "40px", alignItems: "center" }}>
-            {["Platform", "Analytics", "Enterprise", "Docs"].map((item) => (
+            {["Platform", "Reports", "Governance", "Docs"].map((item) => (
               <NavLink key={item}>{item}</NavLink>
             ))}
-            <PrimaryButton onClick={onEnter}>Open Dashboard</PrimaryButton>
+            <PrimaryButton onClick={onEnter}>Open Analysis Lab</PrimaryButton>
           </div>
         )}
       </div>
@@ -388,11 +389,11 @@ function Nav({ onEnter, isTablet }) {
             gap: "12px",
           }}
         >
-          {["Platform", "Analytics", "Enterprise", "Docs"].map((item) => (
+          {["Platform", "Reports", "Governance", "Docs"].map((item) => (
             <NavLink key={item}>{item}</NavLink>
           ))}
           <PrimaryButton onClick={onEnter} style={{ width: "100%", justifySelf: "stretch" }}>
-            Open Dashboard
+            Open Analysis Lab
           </PrimaryButton>
         </div>
       )}
@@ -471,19 +472,19 @@ function Hero({ onEnter, isCompact }) {
               lineHeight: 1.6,
             }}
           >
-            Enterprise Risk Intelligence Platform + Built on MERN
+            AI-powered startup risk assessment workspace
           </span>
         </div>
 
         <div style={{ marginBottom: isCompact ? "28px" : "40px", maxWidth: "980px" }}>
           <RevealText delay={0.1} size={isCompact ? "clamp(42px, 14vw, 72px)" : "clamp(58px, 8vw, 96px)"}>
-            Risk Analytics,
+            Startup risk,
           </RevealText>
           <RevealText delay={0.2} size={isCompact ? "clamp(42px, 14vw, 72px)" : "clamp(58px, 8vw, 96px)"}>
-            <span style={{ color: "#333" }}>Redefined</span> for
+            <span style={{ color: "#333" }}>made useful</span> for
           </RevealText>
           <RevealText delay={0.3} size={isCompact ? "clamp(42px, 14vw, 72px)" : "clamp(58px, 8vw, 96px)"}>
-            the Enterprise.
+            investor readiness.
           </RevealText>
         </div>
 
@@ -506,10 +507,10 @@ function Hero({ onEnter, isCompact }) {
               width: isCompact ? "100%" : "auto",
             }}
           >
-            Enter Dashboard
+            Open Analysis Lab
           </PrimaryButton>
           <span style={{ fontSize: isCompact ? "12px" : "13px", color: "#444", lineHeight: 1.6 }}>
-            Full-stack + MongoDB + JWT Auth + Nivo Charts
+            Structured reports, fallback honesty, and benchmark-aware scoring
           </span>
         </div>
       </div>
@@ -518,6 +519,8 @@ function Hero({ onEnter, isCompact }) {
 }
 
 export default function LandingPage({ onEnter }) {
+  const navigate = useNavigate();
+  const enterWorkspace = onEnter || (() => navigate("/dashboard/analysis"));
   const { isMobile, isTablet } = useViewport();
   const sectionPadding = isMobile ? "0 18px" : "0 48px";
   const blockPadding = isMobile ? "72px 18px" : "100px 48px";
@@ -526,8 +529,8 @@ export default function LandingPage({ onEnter }) {
     <div style={{ background: "#000", color: "#fff", minHeight: "100vh", fontFamily: "'Inter', sans-serif", overflowX: "hidden" }}>
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
       <GlobalStyles />
-      <Nav onEnter={onEnter} isTablet={isTablet} />
-      <Hero onEnter={onEnter} isCompact={isTablet} />
+      <Nav onEnter={enterWorkspace} isTablet={isTablet} />
+      <Hero onEnter={enterWorkspace} isCompact={isTablet} />
       <Ticker compact={isTablet} />
 
       <section style={{ padding: isMobile ? "24px 18px 64px" : "80px 48px" }}>
@@ -592,13 +595,13 @@ export default function LandingPage({ onEnter }) {
 
       <section style={{ padding: blockPadding, borderTop: "1px solid #111" }}>
         <RevealText delay={0} size={isMobile ? "clamp(30px, 11vw, 44px)" : "clamp(48px, 8vw, 96px)"}>
-          The data is live.
+          The output is structured.
         </RevealText>
         <RevealText delay={0.15} size={isMobile ? "clamp(30px, 11vw, 44px)" : "clamp(48px, 8vw, 96px)"}>
-          <span style={{ color: "#333" }}>The insights</span> are instant.
+          <span style={{ color: "#333" }}>The assumptions</span> are visible.
         </RevealText>
         <RevealText delay={0.3} size={isMobile ? "clamp(30px, 11vw, 44px)" : "clamp(48px, 8vw, 96px)"}>
-          The risk is yours to own.
+          The next steps are concrete.
         </RevealText>
 
         <div
@@ -614,7 +617,7 @@ export default function LandingPage({ onEnter }) {
           }}
         >
           <PrimaryButton
-            onClick={onEnter}
+            onClick={enterWorkspace}
             style={{
               padding: isMobile ? "14px 18px" : "18px 40px",
               fontSize: "15px",
@@ -622,9 +625,9 @@ export default function LandingPage({ onEnter }) {
               width: isMobile ? "100%" : "auto",
             }}
           >
-            Open Dashboard
+            Open Analysis Lab
           </PrimaryButton>
-          <span style={{ fontSize: "13px", color: "#333", lineHeight: 1.6 }}>No setup required. Live data.</span>
+          <span style={{ fontSize: "13px", color: "#333", lineHeight: 1.6 }}>Works locally. Clearly labels fallback analysis.</span>
         </div>
       </section>
 
@@ -644,7 +647,7 @@ export default function LandingPage({ onEnter }) {
           RiskLens AI <span style={{ color: "#222" }}>+</span>
         </div>
         <div style={{ fontSize: "12px", color: "#333", letterSpacing: "0.05em", lineHeight: 1.6 }}>
-          React + Node.js + Express + MongoDB + JWT + Nivo
+          React + Express + Gemini-ready analysis API
         </div>
         <div style={{ fontSize: "12px", color: "#222" }}>Copyright 2025 Manas Gupta</div>
       </footer>

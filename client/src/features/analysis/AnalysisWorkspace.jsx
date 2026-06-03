@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { theme as defaultTheme } from "../../theme";
+import { saveReport } from "../../lib/reportStore";
 import {
   ANALYSIS_STEPS,
   BUSINESS_MODEL_OPTIONS,
@@ -26,7 +28,7 @@ function toneColors(level, C) {
 }
 
 function InputLabel({ children, theme }) {
-  return <p style={{ color: theme.C.t3, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", fontFamily: theme.SYNE, marginBottom: 10 }}>{children}</p>;
+  return <span style={{ display: "block", color: theme.C.t3, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", fontFamily: theme.SYNE, marginBottom: 10 }}>{children}</span>;
 }
 
 function HelperText({ error, children, theme }) {
@@ -67,7 +69,7 @@ function fieldStyle(theme, layout, isTextarea = false) {
 function SelectField({ label, value, onChange, options, placeholder, error, hint, theme, layout }) {
   return (
     <BaseField label={label} error={error} hint={hint} theme={theme}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={fieldStyle(theme, layout)} aria-invalid={Boolean(error)}>
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={fieldStyle(theme, layout)} aria-invalid={Boolean(error)} aria-label={label}>
         <option value="">{placeholder}</option>
         {options.map((option) => (
           <option key={option} value={option}>{option}</option>
@@ -80,7 +82,7 @@ function SelectField({ label, value, onChange, options, placeholder, error, hint
 function TextField({ label, value, onChange, placeholder, error, hint, theme, layout }) {
   return (
     <BaseField label={label} error={error} hint={hint} theme={theme}>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={fieldStyle(theme, layout)} aria-invalid={Boolean(error)} />
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={fieldStyle(theme, layout)} aria-invalid={Boolean(error)} aria-label={label} />
     </BaseField>
   );
 }
@@ -88,7 +90,7 @@ function TextField({ label, value, onChange, placeholder, error, hint, theme, la
 function TextAreaField({ label, value, onChange, placeholder, error, hint, theme, layout }) {
   return (
     <BaseField label={label} error={error} hint={hint} theme={theme}>
-      <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={fieldStyle(theme, layout, true)} aria-invalid={Boolean(error)} />
+      <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={fieldStyle(theme, layout, true)} aria-invalid={Boolean(error)} aria-label={label} />
     </BaseField>
   );
 }
@@ -428,7 +430,27 @@ function StepContent({ stepIndex, form, errors, setField, theme, layout }) {
   }
 }
 
-export default function AnalysisWorkspace({ layout, theme }) {
+function useDefaultLayout() {
+  const getWidth = () => (typeof window === "undefined" ? 1440 : window.innerWidth);
+  const [width, setWidth] = useState(getWidth);
+
+  useEffect(() => {
+    const onResize = () => setWidth(getWidth());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  return {
+    width,
+    isMobile: width < 768,
+    isTablet: width < 1100,
+  };
+}
+
+export default function AnalysisWorkspace({ layout: providedLayout, theme: providedTheme }) {
+  const fallbackLayout = useDefaultLayout();
+  const layout = providedLayout || fallbackLayout;
+  const theme = providedTheme || defaultTheme;
   const [stepIndex, setStepIndex] = useState(0);
   const [form, setForm] = useState(INITIAL_ANALYSIS_FORM);
   const [errors, setErrors] = useState({});
@@ -510,6 +532,12 @@ export default function AnalysisWorkspace({ layout, theme }) {
       const [nextAnalysis] = await Promise.all([requestRiskAnalysis(form), minimumLoading]);
       setProgress(100);
       setAnalysis(nextAnalysis);
+      saveReport({
+        company: nextAnalysis.company,
+        analysis: nextAnalysis,
+        formSnapshot: form,
+        provider: nextAnalysis.metadata?.provider,
+      });
     } catch {
       await minimumLoading;
       setErrorMessage("RiskLens could not complete the AI analysis right now. Check that the backend is running and try again.");
@@ -533,6 +561,14 @@ export default function AnalysisWorkspace({ layout, theme }) {
                 {analysis.company}
               </h2>
               <p style={{ color: theme.C.t3, fontSize: 14, lineHeight: 1.8, maxWidth: 780 }}>{analysis.narrative}</p>
+              {analysis.metadata?.provider === "local-fallback" && (
+                <div style={{ marginTop: 14, display: "grid", gap: 6, border: `1px solid ${theme.C.medBg}`, background: "#110c00", padding: "12px 14px" }}>
+                  <p style={{ color: theme.C.medFg, fontFamily: theme.SYNE, fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase" }}>Fallback heuristic analysis used</p>
+                  <p style={{ color: theme.C.t3, fontSize: 12, lineHeight: 1.6 }}>
+                    The live AI provider was unavailable, so RiskLens generated a lower-confidence heuristic report from local scoring rules.
+                  </p>
+                </div>
+              )}
             </div>
             <div style={{ display: "grid", gap: 10, width: layout.isMobile ? "100%" : "auto" }}>
               <span style={{ justifySelf: layout.isMobile ? "stretch" : "end", padding: "8px 12px", background: toneColors(analysis.overallLevel, theme.C).bg, color: toneColors(analysis.overallLevel, theme.C).fg, border: `1px solid ${toneColors(analysis.overallLevel, theme.C).border}`, fontFamily: theme.SYNE, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center" }}>
@@ -547,7 +583,7 @@ export default function AnalysisWorkspace({ layout, theme }) {
           <div style={{ display: "grid", gridTemplateColumns: layout.isMobile ? "1fr" : "repeat(4, minmax(0, 1fr))", gap: 12 }}>
             <ReportMetric label="Overall Risk Index" value={`${analysis.overallScore}/100`} sublabel="Weighted by market, compliance, AI, operations, and growth." theme={theme} layout={layout} />
             <ReportMetric label="Primary Pressure" value={analysis.topRisks[0]?.title || "-"} sublabel={analysis.topRisks[0]?.level || "N/A"} theme={theme} layout={layout} />
-            <ReportMetric label="AI Governance" value={`${analysis.pillars.find((item) => item.key === "ai")?.score || 0}/100`} sublabel={form.usesAI ? "Active product AI surface" : "Limited current AI exposure"} theme={theme} layout={layout} />
+            <ReportMetric label="Confidence" value={`${analysis.confidenceScore || 0}/100`} sublabel={analysis.confidenceExplanation || "Confidence reflects input completeness and provider quality."} theme={theme} layout={layout} />
             <ReportMetric label="Founder Focus" value={form.founderConcerns.map(labelize).join(", ") || "None"} sublabel="Priority concerns included in the scoring model." theme={theme} layout={layout} />
           </div>
         </div>

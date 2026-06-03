@@ -11,8 +11,11 @@ export async function generateRiskAnalysis(payload) {
   const input = AnalysisRequestSchema.parse(payload);
 
   if (!env.geminiApiKey) {
+    const analysis = normalizeAnalysis({}, input);
+    analysis.confidenceScore = Math.min(analysis.confidenceScore, 58);
+    analysis.confidenceExplanation = "Confidence is reduced because Gemini is not configured and RiskLens used local heuristic scoring instead of live model reasoning.";
     return buildResponse({
-      analysis: normalizeAnalysis({}, input),
+      analysis,
       provider: "local-fallback",
       startedAt,
       validationRecovered: true,
@@ -36,8 +39,11 @@ export async function generateRiskAnalysis(payload) {
       status: error.status,
       message: error.message,
     });
+    const analysis = normalizeAnalysis({}, input);
+    analysis.confidenceScore = Math.min(analysis.confidenceScore, 58);
+    analysis.confidenceExplanation = "Confidence is reduced because the live AI provider failed after retries and RiskLens used local heuristic scoring instead.";
     return buildResponse({
-      analysis: normalizeAnalysis({}, input),
+      analysis,
       provider: "local-fallback",
       startedAt,
       validationRecovered: true,

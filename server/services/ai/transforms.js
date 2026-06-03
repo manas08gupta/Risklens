@@ -150,6 +150,22 @@ export function normalizeAnalysis(candidate, input) {
       level: allowedReadiness.has(source.investorReadiness?.level) ? source.investorReadiness.level : readinessLevel(Math.max(20, 100 - overallRiskScore)),
       summary: fitText(source.investorReadiness?.summary, `${input.startupName} has a usable risk story, but investor readiness depends on converting the highest-risk assumptions into evidence.`, 600, 20),
     },
+    confidenceExplanation: fitText(
+      source.confidenceExplanation,
+      "Confidence reflects the specificity of the submitted startup context, the presence of competitive detail, and whether the analysis relied on live model output or fallback heuristics.",
+      700,
+      30
+    ),
+    assumptions: normalizeStringList(source.assumptions, [
+      `${input.startupName} is represented accurately by the submitted founder-provided context.`,
+      "Scores should be treated as diligence prompts, not deterministic investment advice.",
+      input.competitors ? "Competitor context is self-reported and has not been independently verified." : "Competitive context is incomplete, so market pressure may be under-calibrated.",
+    ], 6, 300),
+    missingInformation: normalizeStringList(source.missingInformation, [
+      "Current traction, retention, pricing, and sales-cycle evidence were not provided.",
+      "Customer proof, churn signals, and buyer urgency evidence would materially improve confidence.",
+      input.usesAI ? "AI evaluation results, model monitoring details, and human-review policy were not provided." : "Future AI expansion plans were not described.",
+    ], 6, 240),
     riskSummary: fitText(
       source.riskSummary,
       `${input.startupName} operates in ${input.industry} at the ${input.startupStage} stage. The most important current risks are tied to market proof, execution readiness, and the trust controls needed for the company's target audience.`,
@@ -159,6 +175,14 @@ export function normalizeAnalysis(candidate, input) {
   };
 
   return FullAnalysisResponseSchema.parse(normalized);
+}
+
+function normalizeStringList(value, fallback, maxItems, maxLength) {
+  const input = Array.isArray(value) ? value : [];
+  return [...input, ...fallback]
+    .map((item) => fitText(item, "", maxLength, 10))
+    .filter(Boolean)
+    .slice(0, maxItems);
 }
 
 export function confidenceFromInput(input) {

@@ -1,19 +1,40 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
-import Dashboard from "./pages/Dashboard";
+import DashboardLayout from "./pages/DashboardLayout";
+import LoadingState from "./components/LoadingState";
 
-function App() {
-  const [showDashboard, setShowDashboard] = useState(false);
+const AnalysisWorkspace = lazy(() => import("./features/analysis/AnalysisWorkspace"));
+const DashboardHome = lazy(() => import("./pages/dashboard/DashboardHome"));
+const InsightsPage = lazy(() => import("./pages/dashboard/InsightsPage"));
+const HistoryPage = lazy(() => import("./pages/dashboard/HistoryPage"));
+const SettingsPage = lazy(() => import("./pages/dashboard/SettingsPage"));
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [showDashboard]);
-
-  if (!showDashboard) {
-    return <LandingPage onEnter={() => setShowDashboard(true)} />;
-  }
-
-  return <Dashboard onBack={() => setShowDashboard(false)} />;
+function RouteLoader() {
+  return (
+    <div className="route-loader">
+      <LoadingState title="Preparing workspace" description="Loading the RiskLens surface." />
+    </div>
+  );
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Suspense fallback={<RouteLoader />}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<DashboardHome />} />
+            <Route path="analysis" element={<AnalysisWorkspace />} />
+            <Route path="insights" element={<InsightsPage />} />
+            <Route path="history" element={<HistoryPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/dashboard/analysis" replace />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  );
+}

@@ -36,7 +36,7 @@ export const ANALYSIS_STEPS = [
     number: "05",
     eyebrow: "Analysis Trigger",
     title: "Generate the investor-grade readout",
-    description: "We’ll synthesize the business context, product signals, and AI governance profile into a premium analysis report.",
+    description: "We'll synthesize the business context, product signals, and AI governance profile into a concise investor-readiness report.",
     fields: [],
   },
 ];

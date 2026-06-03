@@ -45,8 +45,6 @@ const industryBenchmarks = {
 };
 
 const sentenceCase = (value) => value.charAt(0).toUpperCase() + value.slice(1);
-const API_BASE = import.meta.env.VITE_APP_BASE_URL || "";
-
 export function validateAnalysisStep(stepIndex, form) {
   switch (stepIndex) {
     case 0:
@@ -108,6 +106,13 @@ function toApiPayload(form) {
 
 function transformApiAnalysis(apiResponse, form) {
   const analysis = apiResponse.analysis;
+  const metadata = apiResponse.metadata;
+  const fallbackUsed = metadata?.provider === "local-fallback";
+  const confidenceScore = fallbackUsed
+    ? Math.min(analysis.confidenceScore || 0, 58)
+    : metadata?.validationRecovered
+      ? Math.min(analysis.confidenceScore || 0, 78)
+    : analysis.confidenceScore;
   const scoreEntries = [
     ["market", "Market Exposure", analysis.marketRisk],
     ["execution", "Execution Risk", analysis.executionRisk],
@@ -129,7 +134,14 @@ function transformApiAnalysis(apiResponse, form) {
     company: form.startupName || "Untitled Startup",
     overallScore: analysis.overallRiskScore,
     overallLevel: levelFromRiskScore(analysis.overallRiskScore),
-    confidenceScore: analysis.confidenceScore,
+    confidenceScore,
+    confidenceExplanation: analysis.confidenceExplanation || (fallbackUsed
+      ? "Reduced because the live AI provider was unavailable and local heuristics were used."
+      : metadata?.validationRecovered
+        ? "Reduced because RiskLens had to normalize or repair part of the AI response before displaying the report."
+        : "Reflects input completeness, specificity, and model validation recovery status."),
+    assumptions: analysis.assumptions || [],
+    missingInformation: analysis.missingInformation || [],
     narrative: analysis.riskSummary,
     pillars,
     topRisks: analysis.findings.slice(0, 4).map((finding, index) => ({
@@ -156,7 +168,7 @@ function transformApiAnalysis(apiResponse, form) {
       { label: "Investor Readiness", value: `${analysis.investorReadiness.score}/100`, tone: levelFromRiskScore(100 - analysis.investorReadiness.score) },
       { label: "Benchmark Lens", value: analysis.benchmarkComparison.peerComparison, tone: "Low" },
     ],
-    metadata: apiResponse.metadata,
+    metadata,
   };
 }
 
@@ -178,17 +190,10 @@ function pillarDescription(key, analysis, form) {
 }
 
 export async function requestRiskAnalysis(form) {
-  const response = await fetch(`${API_BASE}/api/analyze`, {
+  const body = await apiFetch("/api/analyze", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(toApiPayload(form)),
   });
-
-  const body = await response.json().catch(() => null);
-
-  if (!response.ok || !body?.analysis) {
-    throw new Error(body?.error?.message || "Risk analysis failed.");
-  }
 
   return transformApiAnalysis(body, form);
 }
@@ -377,3 +382,4 @@ export function generateRiskReport(form) {
     benchmarks,
   };
 }
+import { apiFetch } from "../../config/api";

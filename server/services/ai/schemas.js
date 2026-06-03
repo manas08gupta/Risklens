@@ -83,6 +83,9 @@ export const FullAnalysisResponseSchema = z.object({
   recommendations: z.array(RecommendationSchema).min(3).max(6),
   benchmarkComparison: BenchmarkInsightsSchema,
   investorReadiness: InvestorReadinessSchema,
+  confidenceExplanation: trimmedString(30, 700),
+  assumptions: z.array(trimmedString(10, 300)).min(2).max(6),
+  missingInformation: z.array(trimmedString(10, 240)).min(2).max(6),
   riskSummary: trimmedString(80, 1200),
 });
 
@@ -114,6 +117,9 @@ export const geminiResponseSchema = {
     "recommendations",
     "benchmarkComparison",
     "investorReadiness",
+    "confidenceExplanation",
+    "assumptions",
+    "missingInformation",
     "riskSummary",
   ],
   properties: {
@@ -176,6 +182,9 @@ export const geminiResponseSchema = {
         summary: { type: "string" },
       },
     },
+    confidenceExplanation: { type: "string" },
+    assumptions: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } },
+    missingInformation: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } },
     riskSummary: { type: "string" },
   },
 };
